@@ -1,41 +1,35 @@
 package com.github.dan.NoStorageRestrict;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
+import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
 import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class CameraHook implements IXposedHookLoadPackage {
-
     @Override
-    public void handleLoadPackage(final XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        // Hook hanya ke aplikasi tertentu jika ingin, misalnya:
-        if (!lpparam.packageName.equals("android")) return;
+    public void handleLoadPackage(final LoadPackageParam lpparam) throws Throwable {
+        // Cek package target biar gak hook semua app
+        if (!lpparam.packageName.equals("com.rtsoft.growtopia")) return;
 
-        Class<?> cameraManagerClass = XposedHelpers.findClass(
-                "android.hardware.camera2.CameraManager",
-                lpparam.classLoader
-        );
+        XposedBridge.log("Growtopia loaded, attempting to hook...");
 
-        XposedHelpers.findAndHookMethod(
-                cameraManagerClass,
-                "getCameraIdList",
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        // Logika sebelum original method dipanggil
-                        XposedBridge.log("getCameraIdList() akan dipanggil");
-                    }
+        try {
+            ClassLoader cl = lpparam.classLoader;
 
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        // Logika setelah original method dipanggil
-                        XposedBridge.log("getCameraIdList() dipanggil, hasil asli: " + java.util.Arrays.toString((String[]) param.getResult()));
+            XposedHelpers.findAndHookMethod("com.rtsoft.growtopia.SharedActivity", cl, "makeToastUI", String.class, new XC_MethodHook() {
+					@Override
+					protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+						super.beforeHookedMethod(param);
+					}
+					@Override
+					protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+						super.afterHookedMethod(param);
+					}
+				});
 
-                        // Contoh: ubah hasilnya
-                        // param.setResult(new String[]{"0", "1", "2", "3"});
-                    }
-                }
-        );
+        } catch (Exception e) {
+            XposedBridge.log("Hooking failed: " + e);
+        }
     }
 }
