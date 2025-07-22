@@ -17,16 +17,22 @@ public class CameraHook implements IXposedHookLoadPackage {
         try {
             ClassLoader cl = lpparam.classLoader;
 
-            XposedHelpers.findAndHookMethod("com.rtsoft.growtopia.SharedActivity", cl, "makeToastUI", String.class, new XC_MethodHook() {
-					@Override
-					protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-						super.beforeHookedMethod(param);
-					}
-					@Override
-					protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-						super.afterHookedMethod(param);
-					}
-				});
+            XposedHelpers.findAndHookMethod(
+           "com.rtsoft.growtopia.SharedActivity",
+    cl,
+    "makeToastUI",
+    String.class,
+    new XC_MethodHook() {
+        @Override
+        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+            String msg = (String) param.args[0];
+            if (msg != null && msg.contains("No video content is available")) {
+                XposedBridge.log("Blocked toast: " + msg);
+                param.setResult(null); // Blokir agar tidak muncul
+            }
+        }
+    }
+);
 
         } catch (Exception e) {
             XposedBridge.log("Hooking failed: " + e);
